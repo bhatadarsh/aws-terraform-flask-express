@@ -11,7 +11,7 @@ variable "instance_type" {
 variable "key_name" {
   type = string
   description = "Name of existing key pair in AWS (create in console or via aws cli). Replace before apply."
-  default = "<REPLACE_ME_KEYPAIR_NAME>"
+  default = "key-06-10-2025"
 }
 
 variable "allowed_cidr" {

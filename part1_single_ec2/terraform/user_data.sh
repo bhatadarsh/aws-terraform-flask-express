@@ -1,55 +1,38 @@
 #!/bin/bash
-set -e
+# Update system
+sudo yum update -y
 
-# update and install
-yum update -y
-amazon-linux-extras install -y python3 nodejs nginx
+# Install Python 3 and pip
+sudo yum install -y python3 python3-pip
 
-# install pip packages
-python3 -m pip install --upgrade pip
-python3 -m pip install flask
+# Install Node.js 18 (from NodeSource)
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo yum install -y nodejs
 
-# create app directory
-mkdir -p /opt/apps/flask
-mkdir -p /opt/apps/express
+# Create app directories
+sudo mkdir -p /opt/apps/flask /opt/apps/express
+sudo chmod -R 777 /opt/apps
 
-# write a minimal Flask app
-cat > /opt/apps/flask/app.py <<'PY'
-from flask import Flask, jsonify
+# Flask app
+cat <<EOF > /opt/apps/flask/app.py
+from flask import Flask
 app = Flask(__name__)
 @app.route('/')
 def hello():
-    return jsonify({"message": "Hello from Flask on port 5000"})
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-PY
+    return "Hello from Flask on AWS EC2!"
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+EOF
 
-# write requirements (optional)
-cat > /opt/apps/flask/requirements.txt <<'R'
-flask
-R
-
-# write express app
-cat > /opt/apps/express/index.js <<'JS'
+# Express app
+cat <<EOF > /opt/apps/express/index.js
 const express = require('express');
 const app = express();
-app.get('/', (req, res) => { res.json({message: "Hello from Express on port 3000"}); });
-app.listen(3000, '0.0.0.0');
-JS
+const port = 3000;
+app.get('/', (req, res) => res.send('Hello from Express on AWS EC2!'));
+app.listen(port, '0.0.0.0', () => console.log(\`Express running on port \${port}\`));
+EOF
 
-cat > /opt/apps/express/package.json <<'PJ'
-{
-  "name": "simple-express",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "express": "^4.18.2"
-  }
-}
-PJ
-
-# start Flask and Express in background using nohup
+# Start Flask and Express apps
 nohup python3 /opt/apps/flask/app.py > /var/log/flask.log 2>&1 &
-cd /opt/apps/express
-npm install
-nohup node index.js > /var/log/express.log 2>&1 &
+nohup node /opt/apps/express/index.js > /var/log/express.log 2>&1 &
