@@ -1,6 +1,10 @@
 from flask import Flask, jsonify
 app = Flask(__name__)
 
+@app.route("/")
+def home():
+    return jsonify({"status": "ok", "message": "Flask root path healthy"}), 200
+
 @app.route("/api/")
 def hello_api():
     return jsonify({"message": "Hello from Flask on port 5000"})
